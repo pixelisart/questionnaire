@@ -30,9 +30,15 @@ var MAINAPP = (function(nsp, $, domU, strU) {
         domU.setHTML($('.fill-in-submit'), cObj.buttonText);
         
         for (let i = 0; i < questionsArray.length; i++) {
+            // Simply replacing the first question object with a new question object by calling the Question constructor.
             questionsArray[i] = new Question(questionsArray[i]);
         }
-        //console.log(questionsArray);
+        //console.log(questionArray);
+
+        // Populate the first question.
+        // 1.) First call the populate method which reside in the prototype
+        questionsArray[1].populateTheQuestion();
+        questionsArray[1].displayQuestion();
     },
 
     initQuiz = function() {
@@ -78,7 +84,62 @@ var MAINAPP = (function(nsp, $, domU, strU) {
         
         // Then i also assign the correct div to the object.  Which i always know the correct div
         this.htmlDiv = htmlDiv;
-        console.log(this.htmlDiv); 
+        console.log("this.htmlDiv: " + this.htmlDiv); 
+
+        // When second question is populated, the distractors are not populated.
+        // Below is the solution to populate the distractors.
+        // The "this.questionDiv" contains either fill-in or multi-choice
+        switch (this.questionDiv) {
+            case "fill-in":
+                this.populateTheQuestion = function() {
+                    this.populateQuestion();
+                    htmlDiv.querySelector('textarea').value = ""; // Removes the answer by the time the next question is shown.
+                };
+                console.log("this.populateTheQuestion: " + this.populateTheQuestion);
+                this.checkTheAnswer = function() {
+                    console.log("fill-in");
+                    
+                };
+                break;
+            case "multi-choice":
+                // Grabs all of the <label> elements
+                var distractors = htmlDiv.querySelectorAll('label'),
+                    distractorsRadio = htmlDiv.querySelectorAll('input');
+                this.populateTheQuestion = function() {
+                    this.populateQuestion();
+
+                    // Display none all of the distractors
+                    domU.addClass(distractors, 'remove');
+
+                    // Loops through all the distractors
+                    for (let i = 0; i < distractors.length; i++) {
+                        if (this.distractorText[i] !== undefined) {
+                            // Adds the text that it needs to the distractors label element.
+                            distractors[i].innerHTML = this.distractorText[i];
+
+                            // Then remove the .remove class so that the distractors will show up
+                            domU.removeClass([distractors[i]],'remove');
+                        }
+                    }
+
+                    // Loops through all the input type="radio" fields
+                    for (let i = 0; i < distractorsRadio.length; i++) {
+
+                        // Simply set the checked to false.
+                        // This makes sure that none of them are checked or selected.
+                        distractorsRadio[i].checked = false;
+                    }
+                };
+                this.checkTheAnswer = function() {
+                    
+                };
+                break;
+            default:
+                this.populateTheQuestion = function() {
+                    this.populateQuestion();
+                };
+                break;
+        }
     };
 
     // var q1 = new Question("multi-choice", 1, "What is a constructor", "It's a person", "It is a special method for creating and initializing an object created within a class.", "", 1, "", "", false);
@@ -133,7 +194,8 @@ var MAINAPP = (function(nsp, $, domU, strU) {
 
     //Public Methods and Properties
     nsp.initQuiz = initQuiz;
-    
+    nsp.Question = Question;
+
     return nsp;
     
 })(MAINAPP || {}, UTIL.dom.$, UTIL.dom, UTIL.string);
